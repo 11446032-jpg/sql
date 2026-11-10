@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL 互動查詢系統 - 甜品門市訂單與庫存管理</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --primary: #2563eb;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+    }
+    h1 { margin: 0 0 8px 0; color: #0f172a; }
+    h2 { margin-top: 0; color: #1e3a8a; font-size: 1.25rem; }
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      font-family: monospace;
+      font-size: 0.95rem;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    button:hover { background-color: #1d4ed8; }
+    .quick-queries button {
+      background-color: #e2e8f0;
+      color: #334155;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    .quick-queries button:hover { background-color: #cbd5e1; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th { background: #f1f5f9; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      border-radius: 4px;
+      background: #e0e7ff;
+      color: #3730a3;
+      margin-bottom: 8px;
+    }
+    .error { color: #dc2626; font-family: monospace; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>甜品門市訂單與庫存資料庫</h1>
+    <p>資料庫管理實作 - 線上互動 SQL 查詢與分析展示</p>
+  </header>
+
+  <!-- 1. 案例背景 -->
+  <section class="card">
+    <h2>1. 案例背景</h2>
+    <p><strong>使用者對象：</strong>門市店長與庫存管理員。</p>
+    <p><strong>解決問題：</strong>過去門市銷售冰品與甜湯時，品項銷售統計與原料/現貨庫存分散，容易出現熱銷商品缺貨或特定組合無法精確核帳的情況。本資料庫透過標準化關聯結構，串接「商品目錄」、「顧客訂單」及「訂單明細」，協助店長即時掌握銷售額、各品項庫存水位與熱門銷售排行。</p>
+  </section>
+
+  <!-- 2. 資料庫設計 -->
+  <section class="card">
+    <h2>2. 資料庫設計 (Schema & ERD)</h2>
+    <pre>
+[products] (商品資料表)
+  - id (INTEGER, PK)
+  - name (TEXT)
+  - price (INTEGER)
+  - stock (INTEGER)
+
+[orders] (訂單主表)
+  - order_id (INTEGER, PK)
+  - order_date (TEXT)
+  - payment_method (TEXT)
+
+[order_items] (訂單明細表)
+  - item_id (INTEGER, PK)
+  - order_id (INTEGER, FK -> orders.order_id)
+  - product_id (INTEGER, FK -> products.id)
+  - quantity (INTEGER)
+    </pre>
+  </section>
+
+  <!-- 3. 查詢操作 -->
+  <section class="card">
+    <h2>3. 互動查詢操作</h2>
+    <p>點選下方快速填入範例，或直接在文字框輸入任意 SQL 語法進行即時查詢：</p>
+    <div class="quick-queries">
+      <button onclick="setQuery('SELECT * FROM products;')">查看全商品與庫存</button>
+      <button onclick="setQuery('SELECT p.name, SUM(oi.quantity) AS total_sold, SUM(oi.quantity * p.price) AS total_revenue FROM order_items oi JOIN products p ON oi.product_id = p.id GROUP BY p.name ORDER BY total_revenue DESC;')">各品項銷售排行與營業額</button>
+      <button onclick="setQuery('SELECT * FROM products WHERE stock < 20;')">低庫存警戒品項 (&lt; 20)</button>
+    </div>
+
+    <textarea id="sqlInput">SELECT p.name, SUM(oi.quantity) AS total_sold FROM order_items oi JOIN products p ON oi.product_id = p.id GROUP BY p.name;</textarea>
+    <br>
+    <button onclick="runSQL()">執行 SQL</button>
+
+    <div id="outputArea"></div>
+  </section>
+
+  <!-- 4. 結果比較 -->
+  <section class="card">
+    <h2>4. 查詢結果比較與差異分析</h2>
+    <span class="badge">情境：統計每種商品的被訂購次數</span>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div>
+        <p><strong>查詢 A (使用 INNER JOIN)：</strong></p>
+        <pre>SELECT p.name, COUNT(oi.item_id) AS order_count
+FROM products p
+INNER JOIN order_items oi ON p.id = oi.product_id
+GROUP BY p.name;</pre>
+        <p><small>結果：僅列出有銷售紀錄的品項（例如芋圓刨冰、紅豆湯），完全沒被購買過的冷門品項直接消失。</small></p>
+      </div>
+
+      <div>
+        <p><strong>查詢 B (修改為 LEFT JOIN)：</strong></p>
+        <pre>SELECT p.name, COUNT(oi.item_id) AS order_count
+FROM products p
+LEFT JOIN order_items oi ON p.id = oi.product_id
+GROUP BY p.name;</pre>
+        <p><small>結果：列出所有品項，尚未售出的品項計數會顯示為 0。</small></p>
+      </div>
+    </div>
+
+    <p style="margin-top: 12px; background: #f8fafc; padding: 10px; border-left: 4px solid var(--primary);">
+      <strong>原因解析：</strong><code>INNER JOIN</code> 僅保留兩表交集的紀錄；若商品在 <code>order_items</code> 內無配對鍵值則會被排除。改用 <code>LEFT JOIN</code> 以商品表（左表）為基準，即使右表無關聯數據也會保留主表資料並以 NULL 填補，經 <code>COUNT(oi.item_id)</code> 計算即能呈現 0，避免庫存統計漏失滯銷品。
+    </p>
+  </section>
+</div>
+
+<script>
+let db;
+
+async function initDB() {
+  const SQL = await initSqlJs({
+    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+  });
+  db = new SQL.Database();
+
+  // 建立範例資料表與初始假資料
+  const setupScript = `
+    CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price INTEGER, stock INTEGER);
+    INSERT INTO products VALUES (1, '招牌芋圓刨冰', 75, 45);
+    INSERT INTO products VALUES (2, '黑糖珍珠鮮奶冰', 80, 18);
+    INSERT INTO products VALUES (3, '慢燉紅豆湯', 55, 30);
+    INSERT INTO products VALUES (4, '冬季特調杏仁茶', 60, 12);
+    INSERT INTO products VALUES (5, '新品桂花凍冰沙', 70, 50);
+
+    CREATE TABLE orders (order_id INTEGER PRIMARY KEY, order_date TEXT, payment_method TEXT);
+    INSERT INTO orders VALUES (101, '2026-11-01', 'LINE Pay');
+    INSERT INTO orders VALUES (102, '2026-11-01', '現金');
+    INSERT INTO orders VALUES (103, '2026-11-02', '信用卡');
+
+    CREATE TABLE order_items (item_id INTEGER PRIMARY KEY, order_id INTEGER, product_id INTEGER, quantity INTEGER);
+    INSERT INTO order_items VALUES (1, 101, 1, 2);
+    INSERT INTO order_items VALUES (2, 101, 3, 1);
+    INSERT INTO order_items VALUES (3, 102, 2, 1);
+    INSERT INTO order_items VALUES (4, 103, 1, 3);
+  `;
+  db.run(setupScript);
+  runSQL();
+}
+
+function setQuery(sql) {
+  document.getElementById('sqlInput').value = sql;
+  runSQL();
+}
+
+function runSQL() {
+  const query = document.getElementById('sqlInput').value;
+  const output = document.getElementById('outputArea');
+  output.innerHTML = '';
+
+  try {
+    const res = db.exec(query);
+    if (res.length === 0) {
+      output.innerHTML = '<p style="color: #64748b; margin-top: 10px;">語法執行成功，但無符合條件的回傳資料。</p>';
+      return;
+    }
+
+    const columns = res[0].columns;
+    const values = res[0].values;
+
+    let html = '<table><thead><tr>';
+    columns.forEach(col => html += `<th>${col}</th>`);
+    html += '</tr></thead><tbody>';
+
+    values.forEach(row => {
+      html += '<tr>';
+      row.forEach(val => html += `<td>${val !== null ? val : 'NULL'}</td>`);
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+
+    output.innerHTML = html;
+  } catch (err) {
+    output.innerHTML = `<div class="error">錯誤: ${err.message}</div>`;
+  }
+}
+
+initDB();
+</script>
+</body>
+</html>
