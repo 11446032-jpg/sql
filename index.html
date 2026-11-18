@@ -1,263 +1,533 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SQL 互動查詢系統 - 甜品門市訂單與庫存管理</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
-      --primary: #2563eb;
-      --border: #e2e8f0;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.6;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 24px;
-    }
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-    }
-    header {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid var(--border);
-    }
-    h1 { margin: 0 0 8px 0; color: #0f172a; }
-    h2 { margin-top: 0; color: #1e3a8a; font-size: 1.25rem; }
-    .card {
-      background: var(--card);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border: 1px solid var(--border);
-    }
-    pre {
-      background: #0f172a;
-      color: #f8fafc;
-      padding: 12px;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-size: 0.9rem;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      font-family: monospace;
-      font-size: 0.95rem;
-      padding: 10px;
-      box-sizing: border-box;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-    }
-    button {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      margin-top: 8px;
-    }
-    button:hover { background-color: #1d4ed8; }
-    .quick-queries button {
-      background-color: #e2e8f0;
-      color: #334155;
-      margin-right: 8px;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-    }
-    .quick-queries button:hover { background-color: #cbd5e1; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 0.9rem;
-    }
-    th, td {
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      text-align: left;
-    }
-    th { background: #f1f5f9; }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      background: #e0e7ff;
-      color: #3730a3;
-      margin-bottom: 8px;
-    }
-    .error { color: #dc2626; font-family: monospace; margin-top: 8px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>茶語時光｜飲料店點餐資料庫 SQL 查詢網頁</title>
+<style>
+  :root{
+    --bg:#faf6f0; --card:#fff; --ink:#2b2420; --muted:#7a6a5e; --line:#e8ddd0;
+    --tea:#8b5a2b; --tea-soft:#f3e6d6; --green:#2f7d4f; --red:#b3261e; --code:#1f1b18;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  header{background:linear-gradient(135deg,#6b4423,#a8743f);color:#fff;padding:48px 20px 36px;text-align:center}
+  header h1{margin:0 0 6px;font-size:2rem;letter-spacing:.05em}
+  header p{margin:0;opacity:.9}
+  nav{position:sticky;top:0;z-index:10;background:#fffdf9;border-bottom:1px solid var(--line);display:flex;gap:4px;justify-content:center;flex-wrap:wrap;padding:8px}
+  nav a{color:var(--tea);text-decoration:none;padding:6px 14px;border-radius:999px;font-weight:600;font-size:.95rem}
+  nav a:hover{background:var(--tea-soft)}
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+  section{margin-top:40px}
+  h2{font-size:1.5rem;border-left:6px solid var(--tea);padding-left:12px;margin:0 0 16px}
+  h3{margin:0 0 8px;font-size:1.15rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(80,50,20,.05)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:800px){.grid2{grid-template-columns:1fr}}
+  .pill{display:inline-block;background:var(--tea-soft);color:var(--tea);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:700;margin-right:6px}
+  .muted{color:var(--muted)}
+  ul.problems li{margin:4px 0}
+  textarea{width:100%;min-height:150px;font-family:ui-monospace,"Cascadia Code",Consolas,monospace;font-size:.92rem;background:var(--code);color:#f5e9dc;border:none;border-radius:10px;padding:14px;resize:vertical;line-height:1.55}
+  pre.sql{background:var(--code);color:#f5e9dc;border-radius:10px;padding:12px 14px;overflow:auto;font-size:.85rem;margin:8px 0;white-space:pre-wrap}
+  .btns{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+  button{border:none;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:.92rem}
+  .run{background:var(--tea);color:#fff}
+  .run:hover{background:#6f4520}
+  .ghost{background:var(--tea-soft);color:var(--tea)}
+  .tbl-wrap{overflow:auto;max-height:340px;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;font-size:.88rem}
+  th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{background:#f7efe5;position:sticky;top:0}
+  td.null{color:#b0a395;font-style:italic}
+  .label{font-weight:700;font-size:.9rem;margin:12px 0 6px}
+  .status{margin-top:10px;padding:8px 12px;border-radius:8px;font-size:.92rem}
+  .ok{background:#e7f4ec;color:var(--green)}
+  .diff{background:#fff4e0;color:#8a5a00}
+  .err{background:#fdecea;color:var(--red);font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap}
+  .explain{background:#fbf7f1;border-left:4px solid var(--tea);padding:10px 14px;border-radius:0 8px 8px 0;margin-top:12px}
+  .erd-wrap{overflow:auto}
+  #loading{text-align:center;padding:10px;background:#fff4e0;color:#8a5a00}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;padding:30px}
+</style>
 </head>
 <body>
 
-<div class="container">
-  <header>
-    <h1>甜品門市訂單與庫存資料庫</h1>
-    <p>資料庫管理實作 - 線上互動 SQL 查詢與分析展示</p>
-  </header>
+<header>
+  <h1>🧋 茶語時光 點餐資料庫</h1>
+  <p>資料庫管理實作｜製作自己的 SQL 查詢網頁</p>
+</header>
 
-  <!-- 1. 案例背景 -->
-  <section class="card">
-    <h2>1. 案例背景</h2>
-    <p><strong>使用者對象：</strong>門市店長與庫存管理員。</p>
-    <p><strong>解決問題：</strong>過去門市銷售冰品與甜湯時，品項銷售統計與原料/現貨庫存分散，容易出現熱銷商品缺貨或特定組合無法精確核帳的情況。本資料庫透過標準化關聯結構，串接「商品目錄」、「顧客訂單」及「訂單明細」，協助店長即時掌握銷售額、各品項庫存水位與熱門銷售排行。</p>
-  </section>
+<nav>
+  <a href="#case">1. 案例背景</a>
+  <a href="#design">2. 資料庫設計</a>
+  <a href="#query">3. 查詢操作</a>
+  <a href="#compare">4. 結果比較</a>
+  <a href="#playground">自由練習</a>
+</nav>
+<div id="loading">正在載入瀏覽器內的 SQLite 引擎…</div>
 
-  <!-- 2. 資料庫設計 -->
-  <section class="card">
-    <h2>2. 資料庫設計 (Schema & ERD)</h2>
-    <pre>
-[products] (商品資料表)
-  - id (INTEGER, PK)
-  - name (TEXT)
-  - price (INTEGER)
-  - stock (INTEGER)
+<main>
 
-[orders] (訂單主表)
-  - order_id (INTEGER, PK)
-  - order_date (TEXT)
-  - payment_method (TEXT)
+<!-- ============ 1. 案例背景 ============ -->
+<section id="case">
+  <h2>1. 案例背景</h2>
+  <div class="card">
+    <p><b>「茶語時光」</b>是一家虛構的社區手搖飲料店，有內用、外帶、外送三種通路，並提供會員制度（一般／銀卡／金卡）。
+    過去店長只用紙本和收銀機紀錄，很難回答經營上的問題，因此設計這個資料庫來紀錄<b>會員、商品、訂單與訂單明細</b>。</p>
+    <p><span class="pill">使用者</span>店長、櫃台店員、行銷人員</p>
+    <p><span class="pill">要解決的問題</span></p>
+    <ul class="problems">
+      <li>目前菜單各分類有幾個品項？價格帶如何？（定價策略）</li>
+      <li>哪些飲品最熱賣？（決定備料量）</li>
+      <li>哪些會員消費最多？（會員回饋）</li>
+      <li>哪些會員註冊了卻從沒點過？（發優惠券喚回）</li>
+      <li>內用、外帶、外送哪個通路營收最高？（決定要不要加強外送）</li>
+      <li>顧客最常選哪種甜度？（糖漿備量）</li>
+    </ul>
+    <p class="muted">資料都是自己編的範例資料，期間為 2026 年 11 月 2 日～13 日，共 6 位會員、10 項商品、12 筆訂單（其中 2 筆被取消）、21 筆訂單明細。</p>
+  </div>
+</section>
 
-[order_items] (訂單明細表)
-  - item_id (INTEGER, PK)
-  - order_id (INTEGER, FK -> orders.order_id)
-  - product_id (INTEGER, FK -> products.id)
-  - quantity (INTEGER)
-    </pre>
-  </section>
+<!-- ============ 2. 資料庫設計 ============ -->
+<section id="design">
+  <h2>2. 資料庫設計</h2>
+  <div class="card">
+    <h3>ERD（實體關聯圖）</h3>
+    <p class="muted">🔑 = 主鍵 (PK)、🔗 = 外鍵 (FK)。一位會員可以有多筆訂單（1:N），一筆訂單有多筆明細（1:N），一項商品可以出現在多筆明細中（1:N）。
+    <b>order_items</b> 是連接「訂單」與「商品」多對多關係的中間表。</p>
+    <div class="erd-wrap" id="erd"></div>
+  </div>
+  <div class="card">
+    <h3>設計重點</h3>
+    <ul>
+      <li><b>orders.member_id 可以是 NULL</b>：非會員也能點餐（例如訂單 103、109）。</li>
+      <li><b>order_items.unit_price 另外存一份</b>：商品以後可能漲價，訂單要保留「當時」的售價，營收才不會算錯。</li>
+      <li><b>甜度、冰塊放在 order_items</b>：同一筆訂單裡每杯的客製化都可能不同。</li>
+      <li><b>products.is_active</b>：停售商品不刪除（舊訂單還會用到），只標記為 0。</li>
+      <li><b>orders.status</b>：取消的訂單保留紀錄，但計算銷售時要排除。</li>
+    </ul>
+  </div>
+  <div id="columns"></div>
+  <div class="card">
+    <h3>樣本資料</h3>
+    <div class="btns" id="sample-tabs"></div>
+    <div id="sample-table"></div>
+  </div>
+</section>
 
-  <!-- 3. 查詢操作 -->
-  <section class="card">
-    <h2>3. 互動查詢操作</h2>
-    <p>點選下方快速填入範例，或直接在文字框輸入任意 SQL 語法進行即時查詢：</p>
-    <div class="quick-queries">
-      <button onclick="setQuery('SELECT * FROM products;')">查看全商品與庫存</button>
-      <button onclick="setQuery('SELECT p.name, SUM(oi.quantity) AS total_sold, SUM(oi.quantity * p.price) AS total_revenue FROM order_items oi JOIN products p ON oi.product_id = p.id GROUP BY p.name ORDER BY total_revenue DESC;')">各品項銷售排行與營業額</button>
-      <button onclick="setQuery('SELECT * FROM products WHERE stock < 20;')">低庫存警戒品項 (&lt; 20)</button>
-    </div>
+<!-- ============ 3. 查詢操作 ============ -->
+<section id="query">
+  <h2>3. 查詢操作</h2>
+  <p class="muted">每一題都可以直接修改 SQL，按「執行」看實際結果；系統會自動和預期結果比對。改壞了按「還原」就好。資料每次執行都會重新建立，所以就算下 DELETE 也不會壞掉。</p>
+  <div id="queries"></div>
+</section>
 
-    <textarea id="sqlInput">SELECT p.name, SUM(oi.quantity) AS total_sold FROM order_items oi JOIN products p ON oi.product_id = p.id GROUP BY p.name;</textarea>
-    <br>
-    <button onclick="runSQL()">執行 SQL</button>
+<!-- ============ 4. 結果比較 ============ -->
+<section id="compare">
+  <h2>4. 結果比較</h2>
+  <p class="muted">針對同一個問題，只改 SQL 的一小部分，結果就可能完全不同。左邊是原本的 SQL，右邊是修改後的版本。</p>
+  <div id="compares"></div>
+</section>
 
-    <div id="outputArea"></div>
-  </section>
+<!-- ============ 自由練習 ============ -->
+<section id="playground">
+  <h2>自由練習</h2>
+  <div class="card">
+    <p class="muted">可用的資料表：members、products、orders、order_items。試試看自己寫查詢！</p>
+    <textarea id="free-sql">SELECT o.order_id, m.name, o.order_time, o.channel, o.status
+FROM orders o
+LEFT JOIN members m ON o.member_id = m.member_id
+ORDER BY o.order_time;</textarea>
+    <div class="btns"><button class="run" id="free-run">▶ 執行</button></div>
+    <div id="free-out"></div>
+  </div>
+</section>
 
-  <!-- 4. 結果比較 -->
-  <section class="card">
-    <h2>4. 查詢結果比較與差異分析</h2>
-    <span class="badge">情境：統計每種商品的被訂購次數</span>
-    
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-      <div>
-        <p><strong>查詢 A (使用 INNER JOIN)：</strong></p>
-        <pre>SELECT p.name, COUNT(oi.item_id) AS order_count
-FROM products p
-INNER JOIN order_items oi ON p.id = oi.product_id
-GROUP BY p.name;</pre>
-        <p><small>結果：僅列出有銷售紀錄的品項（例如芋圓刨冰、紅豆湯），完全沒被購買過的冷門品項直接消失。</small></p>
-      </div>
+</main>
+<footer>資料庫管理實作作業｜使用 <a href="https://sql.js.org/" target="_blank" rel="noopener">sql.js</a>（SQLite 編譯成 WebAssembly）在瀏覽器中執行 SQL</footer>
 
-      <div>
-        <p><strong>查詢 B (修改為 LEFT JOIN)：</strong></p>
-        <pre>SELECT p.name, COUNT(oi.item_id) AS order_count
-FROM products p
-LEFT JOIN order_items oi ON p.id = oi.product_id
-GROUP BY p.name;</pre>
-        <p><small>結果：列出所有品項，尚未售出的品項計數會顯示為 0。</small></p>
-      </div>
-    </div>
-
-    <p style="margin-top: 12px; background: #f8fafc; padding: 10px; border-left: 4px solid var(--primary);">
-      <strong>原因解析：</strong><code>INNER JOIN</code> 僅保留兩表交集的紀錄；若商品在 <code>order_items</code> 內無配對鍵值則會被排除。改用 <code>LEFT JOIN</code> 以商品表（左表）為基準，即使右表無關聯數據也會保留主表資料並以 NULL 填補，經 <code>COUNT(oi.item_id)</code> 計算即能呈現 0，避免庫存統計漏失滯銷品。
-    </p>
-  </section>
-</div>
+<!-- ============ 建表與樣本資料 ============ -->
+<script type="text/plain" id="schema">
+CREATE TABLE members (
+  member_id   INTEGER PRIMARY KEY,
+  name        TEXT NOT NULL,
+  phone       TEXT UNIQUE,
+  level       TEXT NOT NULL CHECK (level IN ('一般','銀卡','金卡')),
+  join_date   TEXT NOT NULL
+);
+CREATE TABLE products (
+  product_id  INTEGER PRIMARY KEY,
+  name        TEXT NOT NULL,
+  category    TEXT NOT NULL,
+  price       INTEGER NOT NULL CHECK (price > 0),
+  is_active   INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE orders (
+  order_id    INTEGER PRIMARY KEY,
+  member_id   INTEGER REFERENCES members(member_id),
+  order_time  TEXT NOT NULL,
+  channel     TEXT NOT NULL CHECK (channel IN ('內用','外帶','外送')),
+  status      TEXT NOT NULL CHECK (status IN ('完成','取消'))
+);
+CREATE TABLE order_items (
+  item_id     INTEGER PRIMARY KEY,
+  order_id    INTEGER NOT NULL REFERENCES orders(order_id),
+  product_id  INTEGER NOT NULL REFERENCES products(product_id),
+  qty         INTEGER NOT NULL CHECK (qty > 0),
+  sugar       TEXT NOT NULL,
+  ice         TEXT NOT NULL,
+  unit_price  INTEGER NOT NULL
+);
+INSERT INTO members VALUES
+ (1,'王小明','0912-000-001','金卡','2025-03-02'),
+ (2,'陳怡君','0912-000-002','銀卡','2025-06-18'),
+ (3,'林志豪','0912-000-003','一般','2025-09-01'),
+ (4,'張雅婷','0912-000-004','金卡','2024-12-25'),
+ (5,'李冠廷','0912-000-005','一般','2026-10-30'),
+ (6,'黃詩涵','0912-000-006','銀卡','2026-02-14');
+INSERT INTO products VALUES
+ (1,'珍珠奶茶','奶茶',55,1),
+ (2,'波霸奶茶','奶茶',60,1),
+ (3,'鮮奶紅茶','鮮奶',65,1),
+ (4,'黑糖珍珠鮮奶','鮮奶',75,1),
+ (5,'茉莉綠茶','純茶',30,1),
+ (6,'四季春青茶','純茶',35,1),
+ (7,'冬瓜檸檬','果茶',50,1),
+ (8,'百香雙響炮','果茶',60,1),
+ (9,'芒果冰沙','冰沙',80,0),
+ (10,'烏龍拿鐵','鮮奶',70,1);
+INSERT INTO orders VALUES
+ (101,1,'2026-11-02 12:10','內用','完成'),
+ (102,2,'2026-11-02 15:40','外帶','完成'),
+ (103,NULL,'2026-11-03 10:05','外帶','完成'),
+ (104,1,'2026-11-04 18:30','外送','完成'),
+ (105,3,'2026-11-05 13:15','內用','取消'),
+ (106,4,'2026-11-06 16:20','外送','完成'),
+ (107,4,'2026-11-08 11:00','外帶','完成'),
+ (108,2,'2026-11-09 19:45','外送','完成'),
+ (109,NULL,'2026-11-10 14:30','內用','完成'),
+ (110,6,'2026-11-11 17:05','外帶','完成'),
+ (111,1,'2026-11-12 12:50','外送','取消'),
+ (112,3,'2026-11-13 15:10','外帶','完成');
+INSERT INTO order_items VALUES
+ (1,101,1,2,'半糖','少冰',55),
+ (2,101,5,1,'無糖','去冰',30),
+ (3,102,4,1,'正常','少冰',75),
+ (4,102,7,2,'微糖','正常',50),
+ (5,103,1,1,'半糖','正常',55),
+ (6,104,2,3,'少糖','少冰',60),
+ (7,104,10,1,'無糖','去冰',70),
+ (8,105,8,2,'半糖','正常',60),
+ (9,106,1,4,'微糖','少冰',55),
+ (10,106,6,2,'無糖','去冰',35),
+ (11,106,3,1,'半糖','少冰',65),
+ (12,107,4,2,'正常','正常',75),
+ (13,108,8,1,'半糖','少冰',60),
+ (14,108,1,2,'半糖','少冰',55),
+ (15,109,5,3,'無糖','正常',30),
+ (16,109,7,1,'少糖','少冰',50),
+ (17,110,10,2,'微糖','去冰',70),
+ (18,110,2,1,'半糖','少冰',60),
+ (19,111,4,2,'正常','少冰',75),
+ (20,112,6,1,'無糖','去冰',35),
+ (21,112,1,1,'半糖','正常',55);
+</script>
 
 <script>
-let db;
+/* ---------- 欄位說明 ---------- */
+const TABLES = [
+  { name:'members', zh:'會員', cols:[
+    ['member_id','INTEGER','PK','會員編號'],
+    ['name','TEXT','','會員姓名'],
+    ['phone','TEXT','UNIQUE','手機（不可重複）'],
+    ['level','TEXT','','會員等級：一般／銀卡／金卡'],
+    ['join_date','TEXT','','加入日期']]},
+  { name:'orders', zh:'訂單', cols:[
+    ['order_id','INTEGER','PK','訂單編號'],
+    ['member_id','INTEGER','FK','下單會員；非會員為 NULL'],
+    ['order_time','TEXT','','下單時間'],
+    ['channel','TEXT','','通路：內用／外帶／外送'],
+    ['status','TEXT','','狀態：完成／取消']]},
+  { name:'order_items', zh:'訂單明細', cols:[
+    ['item_id','INTEGER','PK','明細編號'],
+    ['order_id','INTEGER','FK','屬於哪一筆訂單'],
+    ['product_id','INTEGER','FK','點了哪項商品'],
+    ['qty','INTEGER','','杯數'],
+    ['sugar','TEXT','','甜度'],
+    ['ice','TEXT','','冰塊'],
+    ['unit_price','INTEGER','','下單當時單價']]},
+  { name:'products', zh:'商品', cols:[
+    ['product_id','INTEGER','PK','商品編號'],
+    ['name','TEXT','','品名'],
+    ['category','TEXT','','分類：奶茶／鮮奶／純茶／果茶／冰沙'],
+    ['price','INTEGER','','目前售價'],
+    ['is_active','INTEGER','','是否販售中（1=是，0=停售）']]},
+];
 
-async function initDB() {
-  const SQL = await initSqlJs({
-    locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
-  });
-  db = new SQL.Database();
+/* ---------- 查詢題目 ---------- */
+const QUERIES = [
+  { id:'q1', title:'菜單結構分析',
+    question:'目前「有在賣」的商品，每個分類各有幾個品項？平均價格是多少？',
+    expect:'應有 4 個分類（停售的冰沙不列入），鮮奶類平均價格最高（70 元），純茶最便宜（32.5 元）。',
+    sql:`SELECT category AS 分類,
+       COUNT(*) AS 品項數,
+       ROUND(AVG(price), 1) AS 平均價格
+FROM products
+WHERE is_active = 1
+GROUP BY category
+ORDER BY 平均價格 DESC;`,
+    cmp:{ title:'拿掉 WHERE is_active = 1',
+      sql:`SELECT category AS 分類,
+       COUNT(*) AS 品項數,
+       ROUND(AVG(price), 1) AS 平均價格
+FROM products
+GROUP BY category
+ORDER BY 平均價格 DESC;`,
+      explain:'多出一列「冰沙」，而且排在第一名。因為芒果冰沙已經停售（is_active = 0），沒有過濾就會被算進菜單分析，讓店長誤以為冰沙是高價主力商品。這也說明了為什麼設計時用「標記停售」而不是直接刪除資料。'}},
+  { id:'q2', title:'熱銷飲品前三名',
+    question:'在「完成」的訂單中，哪三款飲品賣出的杯數最多？',
+    expect:'珍珠奶茶以 10 杯遙遙領先；第二、三名是各 4 杯的波霸奶茶與茉莉綠茶。',
+    sql:`SELECT p.name AS 飲品, SUM(oi.qty) AS 總杯數
+FROM order_items oi
+JOIN orders o   ON oi.order_id = o.order_id
+JOIN products p ON oi.product_id = p.product_id
+WHERE o.status = '完成'
+GROUP BY p.product_id
+ORDER BY 總杯數 DESC, 飲品
+LIMIT 3;`,
+    cmp:{ title:'沒有排除取消的訂單',
+      sql:`SELECT p.name AS 飲品, SUM(oi.qty) AS 總杯數
+FROM order_items oi
+JOIN orders o   ON oi.order_id = o.order_id
+JOIN products p ON oi.product_id = p.product_id
+GROUP BY p.product_id
+ORDER BY 總杯數 DESC, 飲品
+LIMIT 3;`,
+      explain:'「黑糖珍珠鮮奶」變成 5 杯擠進第二名。原因是訂單 111 被取消了，但裡面的 2 杯黑糖珍珠鮮奶仍被計入。如果店長照這個結果備料，就會多準備實際上沒賣出去的量。'}},
+  { id:'q3', title:'會員消費排行',
+    question:'每位會員在完成的訂單中，共下了幾筆訂單、消費多少錢？',
+    expect:'張雅婷（金卡）消費 505 元最多；共列出 5 位會員。從未下單的李冠廷不會出現。',
+    sql:`SELECT m.name AS 會員, m.level AS 等級,
+       COUNT(DISTINCT o.order_id) AS 訂單數,
+       SUM(oi.qty * oi.unit_price) AS 消費總額
+FROM members m
+JOIN orders o       ON m.member_id = o.member_id
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status = '完成'
+GROUP BY m.member_id
+ORDER BY 消費總額 DESC;`,
+    cmp:{ title:'改用 LEFT JOIN，顯示所有會員',
+      sql:`SELECT m.name AS 會員, m.level AS 等級,
+       COUNT(DISTINCT o.order_id) AS 訂單數,
+       COALESCE(SUM(oi.qty * oi.unit_price), 0) AS 消費總額
+FROM members m
+LEFT JOIN orders o       ON m.member_id = o.member_id
+                        AND o.status = '完成'
+LEFT JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY m.member_id
+ORDER BY 消費總額 DESC;`,
+      explain:'多出「李冠廷 0 筆 0 元」。INNER JOIN 只保留兩邊都對得上的資料，沒下過單的會員就消失了；LEFT JOIN 會保留左表（members）所有列，對不到的欄位補 NULL，再用 COALESCE 把 NULL 換成 0。注意：status = \'完成\' 必須寫在 ON 裡，如果寫在 WHERE，NULL 那一列會被過濾掉，又變回 INNER JOIN 的效果。'}},
+  { id:'q4', title:'沉睡會員名單',
+    question:'哪些會員註冊後一次都沒有下過訂單？（行銷部要寄優惠券）',
+    expect:'只有 1 位：李冠廷（2026-10-30 加入）。',
+    sql:`SELECT m.name AS 會員, m.join_date AS 加入日期
+FROM members m
+LEFT JOIN orders o ON m.member_id = o.member_id
+WHERE o.order_id IS NULL;`,
+    cmp:{ title:'把 LEFT JOIN 改成 JOIN',
+      sql:`SELECT m.name AS 會員, m.join_date AS 加入日期
+FROM members m
+JOIN orders o ON m.member_id = o.member_id
+WHERE o.order_id IS NULL;`,
+      explain:'結果變成 0 筆。INNER JOIN 只會留下「有對應訂單」的會員，所以 o.order_id 永遠不會是 NULL，條件永遠不成立。「找出沒有對應資料的列」一定要用 LEFT JOIN + IS NULL（或 NOT EXISTS）。'}},
+  { id:'q5', title:'各通路營收比較',
+    question:'內用、外帶、外送三種通路，各有幾筆完成的訂單、營收多少？',
+    expect:'外送營收最高（3 筆、775 元），外帶訂單最多（5 筆、670 元），內用最少（2 筆、280 元）。',
+    sql:`SELECT o.channel AS 通路,
+       COUNT(DISTINCT o.order_id) AS 訂單數,
+       SUM(oi.qty * oi.unit_price) AS 營收
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status = '完成'
+GROUP BY o.channel
+ORDER BY 營收 DESC;`,
+    cmp:{ title:'COUNT(DISTINCT o.order_id) 改成 COUNT(*)',
+      sql:`SELECT o.channel AS 通路,
+       COUNT(*) AS 訂單數,
+       SUM(oi.qty * oi.unit_price) AS 營收
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE o.status = '完成'
+GROUP BY o.channel
+ORDER BY 營收 DESC;`,
+      explain:'營收不變，但訂單數變成 7、8、4，比實際多。因為 JOIN order_items 之後，一筆訂單有幾項明細就會變成幾列（例如訂單 106 有 3 項明細），COUNT(*) 算的是「明細列數」而不是訂單數。用 COUNT(DISTINCT order_id) 才能去除重複。'}},
+  { id:'q6', title:'甜度偏好',
+    question:'完成的訂單中，哪些甜度被點了 5 杯以上？（決定糖漿備量）',
+    expect:'半糖 9 杯最多，無糖、微糖各 8 杯；少糖（4 杯）和正常（3 杯）未達門檻不列出。',
+    sql:`SELECT sugar AS 甜度, SUM(qty) AS 杯數
+FROM order_items oi
+JOIN orders o ON oi.order_id = o.order_id
+WHERE o.status = '完成'
+GROUP BY sugar
+HAVING SUM(qty) >= 5
+ORDER BY 杯數 DESC, 甜度;`,
+    cmp:{ title:'拿掉 HAVING',
+      sql:`SELECT sugar AS 甜度, SUM(qty) AS 杯數
+FROM order_items oi
+JOIN orders o ON oi.order_id = o.order_id
+WHERE o.status = '完成'
+GROUP BY sugar
+ORDER BY 杯數 DESC, 甜度;`,
+      explain:'多出「少糖」和「正常」兩列。WHERE 是在分組「之前」過濾每一列明細，HAVING 是在分組「之後」過濾整組的統計結果。如果把條件寫成 WHERE SUM(qty) >= 5，會出現錯誤訊息 misuse of aggregate，因為分組前還沒有 SUM 可以用 — 可以在上方第 6 題的編輯器裡試試看。'}},
+];
 
-  // 建立範例資料表與初始假資料
-  const setupScript = `
-    CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price INTEGER, stock INTEGER);
-    INSERT INTO products VALUES (1, '招牌芋圓刨冰', 75, 45);
-    INSERT INTO products VALUES (2, '黑糖珍珠鮮奶冰', 80, 18);
-    INSERT INTO products VALUES (3, '慢燉紅豆湯', 55, 30);
-    INSERT INTO products VALUES (4, '冬季特調杏仁茶', 60, 12);
-    INSERT INTO products VALUES (5, '新品桂花凍冰沙', 70, 50);
+/* ---------- 工具函式 ---------- */
+let SQL = null;
+const SCHEMA = document.getElementById('schema').textContent;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    CREATE TABLE orders (order_id INTEGER PRIMARY KEY, order_date TEXT, payment_method TEXT);
-    INSERT INTO orders VALUES (101, '2026-11-01', 'LINE Pay');
-    INSERT INTO orders VALUES (102, '2026-11-01', '現金');
-    INSERT INTO orders VALUES (103, '2026-11-02', '信用卡');
-
-    CREATE TABLE order_items (item_id INTEGER PRIMARY KEY, order_id INTEGER, product_id INTEGER, quantity INTEGER);
-    INSERT INTO order_items VALUES (1, 101, 1, 2);
-    INSERT INTO order_items VALUES (2, 101, 3, 1);
-    INSERT INTO order_items VALUES (3, 102, 2, 1);
-    INSERT INTO order_items VALUES (4, 103, 1, 3);
-  `;
-  db.run(setupScript);
-  runSQL();
+function runSQL(sql){
+  const db = new SQL.Database();     // 每次重建，避免資料被改壞
+  try{
+    db.run(SCHEMA);
+    const res = db.exec(sql);
+    return { ok:true, result: res.length ? res[res.length-1] : { columns:[], values:[] } };
+  }catch(e){
+    return { ok:false, error: e.message };
+  }finally{ db.close(); }
 }
 
-function setQuery(sql) {
-  document.getElementById('sqlInput').value = sql;
-  runSQL();
+function tableHTML(r){
+  if(!r.columns.length) return '<div class="status diff">查詢執行成功，但沒有回傳任何欄位（可能是 INSERT／UPDATE／DELETE 指令）。</div>';
+  let h = '<div class="tbl-wrap"><table><thead><tr>' + r.columns.map(c=>`<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+  if(!r.values.length) h += `<tr><td colspan="${r.columns.length}" class="null">（0 筆資料）</td></tr>`;
+  r.values.forEach(row => { h += '<tr>' + row.map(v => v===null ? '<td class="null">NULL</td>' : `<td>${esc(v)}</td>`).join('') + '</tr>'; });
+  return h + `</tbody></table></div><div class="muted" style="font-size:.82rem;margin-top:4px">共 ${r.values.length} 筆</div>`;
 }
+const same = (a,b) => JSON.stringify([a.columns,a.values]) === JSON.stringify([b.columns,b.values]);
 
-function runSQL() {
-  const query = document.getElementById('sqlInput').value;
-  const output = document.getElementById('outputArea');
-  output.innerHTML = '';
-
-  try {
-    const res = db.exec(query);
-    if (res.length === 0) {
-      output.innerHTML = '<p style="color: #64748b; margin-top: 10px;">語法執行成功，但無符合條件的回傳資料。</p>';
-      return;
-    }
-
-    const columns = res[0].columns;
-    const values = res[0].values;
-
-    let html = '<table><thead><tr>';
-    columns.forEach(col => html += `<th>${col}</th>`);
-    html += '</tr></thead><tbody>';
-
-    values.forEach(row => {
-      html += '<tr>';
-      row.forEach(val => html += `<td>${val !== null ? val : 'NULL'}</td>`);
-      html += '</tr>';
+/* ---------- ERD ---------- */
+function drawERD(){
+  const W=200, GAP=60, TOP=40, HEAD=30, ROW=24;
+  const xs = [20, 20+W+GAP, 20+2*(W+GAP), 20+3*(W+GAP)];
+  const rowY = i => TOP+HEAD+i*ROW+ROW/2;
+  let s = `<svg viewBox="0 0 ${xs[3]+W+20} ${TOP+HEAD+7*ROW+40}" width="100%" style="min-width:820px" font-family="ui-monospace,Consolas,monospace" font-size="13">`;
+  TABLES.forEach((t,k)=>{
+    const x=xs[k], h=HEAD+t.cols.length*ROW;
+    s += `<rect x="${x}" y="${TOP}" width="${W}" height="${h}" rx="8" fill="#fff" stroke="#8b5a2b" stroke-width="1.5"/>`;
+    s += `<path d="M${x} ${TOP+8} a8 8 0 0 1 8 -8 h${W-16} a8 8 0 0 1 8 8 v${HEAD-8} h-${W} z" fill="#8b5a2b"/>`;
+    s += `<text x="${x+W/2}" y="${TOP+20}" fill="#fff" text-anchor="middle" font-weight="700">${t.name}（${t.zh}）</text>`;
+    t.cols.forEach((c,i)=>{
+      const y=rowY(i);
+      const icon = c[2]==='PK'?'🔑 ':c[2]==='FK'?'🔗 ':'   ';
+      s += `<text x="${x+10}" y="${y+4}" fill="#2b2420">${icon}${c[0]}</text><text x="${x+W-10}" y="${y+4}" fill="#9a8a7c" text-anchor="end" font-size="11">${c[1]}</text>`;
+      if(i<t.cols.length-1) s += `<line x1="${x}" x2="${x+W}" y1="${y+ROW/2}" y2="${y+ROW/2}" stroke="#eee3d6"/>`;
     });
-    html += '</tbody></table>';
-
-    output.innerHTML = html;
-  } catch (err) {
-    output.innerHTML = `<div class="error">錯誤: ${err.message}</div>`;
-  }
+  });
+  const rel = (d, lx1, ly1, lx2, ly2) =>
+    `<path d="${d}" fill="none" stroke="#2f7d4f" stroke-width="2"/>
+     <text x="${lx1}" y="${ly1}" fill="#2f7d4f" font-weight="700">1</text>
+     <text x="${lx2}" y="${ly2}" fill="#2f7d4f" font-weight="700">N</text>`;
+  const m=xs[0]+W, o=xs[1], o2=xs[1]+W, it=xs[2], it2=xs[2]+W, p=xs[3];
+  s += rel(`M${m} ${rowY(0)} H${m+30} V${rowY(1)} H${o}`, m+4, rowY(0)-6, o-14, rowY(1)-6);
+  s += rel(`M${o2} ${rowY(0)} H${o2+30} V${rowY(1)} H${it}`, o2+4, rowY(0)-6, it-14, rowY(1)-6);
+  s += rel(`M${p} ${rowY(0)} H${p-30} V${rowY(2)} H${it2}`, p-12, rowY(0)-6, it2+4, rowY(2)-6);
+  document.getElementById('erd').innerHTML = s + '</svg>';
 }
 
-initDB();
+function renderColumns(){
+  document.getElementById('columns').innerHTML = '<div class="grid2">' + TABLES.map(t =>
+    `<div class="card"><h3>${t.name}（${t.zh}）</h3><div class="tbl-wrap"><table><thead><tr><th>欄位</th><th>型別</th><th>鍵</th><th>說明</th></tr></thead><tbody>` +
+    t.cols.map(c=>`<tr><td><code>${c[0]}</code></td><td>${c[1]}</td><td>${c[2]}</td><td style="white-space:normal">${c[3]}</td></tr>`).join('') +
+    '</tbody></table></div></div>').join('') + '</div>';
+}
+
+function renderSamples(){
+  const tabs = document.getElementById('sample-tabs');
+  const show = name => { document.getElementById('sample-table').innerHTML = tableHTML(runSQL(`SELECT * FROM ${name};`).result); };
+  ['members','products','orders','order_items'].forEach((n,i)=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=n;
+    b.onclick=()=>show(n); tabs.appendChild(b);
+  });
+  show('members');
+}
+
+/* ---------- 查詢卡片 ---------- */
+function renderQueries(){
+  const box = document.getElementById('queries');
+  QUERIES.forEach((q,idx)=>{
+    const expected = runSQL(q.sql).result;
+    q.expected = expected;
+    const el = document.createElement('div'); el.className='card';
+    el.innerHTML = `
+      <h3><span class="pill">Q${idx+1}</span>${esc(q.title)}</h3>
+      <p><b>查詢問題：</b>${esc(q.question)}</p>
+      <p><b>預期結果：</b>${esc(q.expect)}</p>
+      <textarea spellcheck="false" id="${q.id}-sql">${esc(q.sql)}</textarea>
+      <div class="btns">
+        <button class="run">▶ 執行</button>
+        <button class="ghost reset">↺ 還原</button>
+        <button class="ghost loadcmp">載入「結果比較」的版本</button>
+      </div>
+      <div class="grid2">
+        <div><div class="label">預期結果</div>${tableHTML(expected)}</div>
+        <div><div class="label">實際結果</div><div class="out"><div class="muted">按「執行」看結果</div></div></div>
+      </div>`;
+    const ta = el.querySelector('textarea'), out = el.querySelector('.out');
+    const exec = () => {
+      const r = runSQL(ta.value);
+      if(!r.ok){ out.innerHTML = `<div class="status err">❌ SQL 錯誤：${esc(r.error)}</div>`; return; }
+      const match = same(r.result, expected);
+      out.innerHTML = tableHTML(r.result) + (match
+        ? '<div class="status ok">✅ 與預期結果相同</div>'
+        : `<div class="status diff">⚠️ 與預期結果不同（預期 ${expected.values.length} 筆，實際 ${r.result.values.length} 筆）— 看看是哪裡改變了？</div>`);
+    };
+    el.querySelector('.run').onclick = exec;
+    el.querySelector('.reset').onclick = () => { ta.value = q.sql; exec(); };
+    el.querySelector('.loadcmp').onclick = () => { ta.value = q.cmp.sql; exec(); };
+    ta.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter') exec(); });
+    box.appendChild(el);
+  });
+}
+
+function renderCompares(){
+  const box = document.getElementById('compares');
+  QUERIES.forEach((q,idx)=>{
+    const after = runSQL(q.cmp.sql);
+    const el = document.createElement('div'); el.className='card';
+    el.innerHTML = `
+      <h3><span class="pill">Q${idx+1}</span>${esc(q.title)}：${esc(q.cmp.title)}</h3>
+      <div class="grid2">
+        <div><div class="label">原本的 SQL</div><pre class="sql">${esc(q.sql)}</pre>${tableHTML(q.expected)}</div>
+        <div><div class="label">修改後的 SQL</div><pre class="sql">${esc(q.cmp.sql)}</pre>${after.ok ? tableHTML(after.result) : `<div class="status err">${esc(after.error)}</div>`}</div>
+      </div>
+      <div class="explain"><b>為什麼不一樣？</b>${esc(q.cmp.explain)}</div>`;
+    box.appendChild(el);
+  });
+}
+
+function setupPlayground(){
+  const ta=document.getElementById('free-sql'), out=document.getElementById('free-out');
+  const exec=()=>{ const r=runSQL(ta.value); out.innerHTML = r.ok ? tableHTML(r.result) : `<div class="status err">❌ SQL 錯誤：${esc(r.error)}</div>`; };
+  document.getElementById('free-run').onclick=exec;
+  ta.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey) && e.key==='Enter') exec(); });
+}
+
+/* ---------- 載入 sql.js ---------- */
+const CDNS = ['https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/', 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/'];
+const loadScript = src => new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+
+(async function init(){
+  drawERD(); renderColumns();
+  for(const base of CDNS){
+    try{ await loadScript(base+'sql-wasm.js'); SQL = await initSqlJs({ locateFile: f => base + f }); break; }
+    catch(e){ console.warn('載入失敗', base, e); }
+  }
+  const loading = document.getElementById('loading');
+  if(!SQL){ loading.textContent = '⚠️ 無法載入 SQLite 引擎，請確認網路連線後重新整理。'; return; }
+  loading.remove();
+  renderSamples(); renderQueries(); renderCompares(); setupPlayground();
+})();
 </script>
 </body>
 </html>
